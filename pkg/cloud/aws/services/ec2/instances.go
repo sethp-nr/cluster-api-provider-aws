@@ -183,6 +183,7 @@ func (s *Service) createInstance(machine *actuators.MachineScope, bootstrapToken
 				return input, err
 			}
 		}
+		controlPlaneNodeCount++
 
 		input.UserData = aws.String(userData)
 		input.SecurityGroupIDs = append(input.SecurityGroupIDs, s.scope.SecurityGroups()[v1alpha1.SecurityGroupControlPlane].ID)
@@ -223,6 +224,7 @@ func (s *Service) createInstance(machine *actuators.MachineScope, bootstrapToken
 	if err != nil {
 		return nil, err
 	}
+	machine.ClusterControlPlaneStatus().ControlPlaneNodeCount = controlPlaneNodeCount
 
 	record.Eventf(machine.Machine, "CreatedInstance", "Created new %s instance with id %q", machine.Role(), out.ID)
 	return out, nil
