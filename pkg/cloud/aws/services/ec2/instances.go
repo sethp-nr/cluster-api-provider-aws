@@ -92,7 +92,7 @@ func (s *Service) InstanceIfExists(id string) (*v1alpha1.Instance, error) {
 }
 
 // createInstance runs an ec2 instance.
-func (s *Service) createInstance(machine *actuators.MachineScope, bootstrapToken string) (*v1alpha1.Instance, error) {
+func (s *Service) createInstance(machine *actuators.MachineScope, bootstrapToken, kubeConfig string) (*v1alpha1.Instance, error) {
 	klog.V(2).Infof("Creating a new instance for machine %q", machine.Name())
 
 	input := &v1alpha1.Instance{
@@ -168,6 +168,7 @@ func (s *Service) createInstance(machine *actuators.MachineScope, bootstrapToken
 				CACertHash:     caCertHash,
 				BootstrapToken: bootstrapToken,
 				ELBAddress:     s.scope.Network().APIServerELB.DNSName,
+				KubeConfig:     kubeConfig,
 			})
 			if err != nil {
 				return input, err
@@ -274,7 +275,7 @@ func (s *Service) TerminateInstanceAndWait(instanceID string) error {
 }
 
 // CreateOrGetMachine will either return an existing instance or create and return an instance.
-func (s *Service) CreateOrGetMachine(machine *actuators.MachineScope, bootstrapToken string) (*v1alpha1.Instance, error) {
+func (s *Service) CreateOrGetMachine(machine *actuators.MachineScope, bootstrapToken, kubeConfig string) (*v1alpha1.Instance, error) {
 	klog.V(2).Infof("Attempting to create or get machine %q", machine.Name())
 
 	// instance id exists, try to get it
@@ -297,7 +298,7 @@ func (s *Service) CreateOrGetMachine(machine *actuators.MachineScope, bootstrapT
 		return instance, nil
 	}
 
-	return s.createInstance(machine, bootstrapToken)
+	return s.createInstance(machine, bootstrapToken, kubeConfig)
 }
 
 func (s *Service) runInstance(role string, i *v1alpha1.Instance) (*v1alpha1.Instance, error) {
