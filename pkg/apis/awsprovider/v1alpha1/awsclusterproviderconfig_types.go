@@ -41,10 +41,62 @@ type AWSClusterProviderSpec struct {
 
 	// CAPrivateKey is a PEM encoded PKCS1 CA PrivateKey for the control plane nodes.
 	CAPrivateKey []byte `json:"caKey,omitempty"`
+
+	// NetworkSpec encapsulates all things related to AWS network.
+	NetworkSpec NetworkSpec `json:"networkSpec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 func init() {
 	SchemeBuilder.Register(&AWSClusterProviderSpec{})
+}
+
+// NetworkSpec encapsulates all things related to AWS network.
+type NetworkSpec struct {
+	// VPC configuration.
+	// +optional
+	VPC VPCSpec `json:"vpc,omitempty"`
+
+	// Subnets configuration.
+	// +optional
+	Subnets []SubnetSpec `json:"subnets,omitempty"`
+}
+
+// VPCSpec configures an AWS VPC.
+type VPCSpec struct {
+	// ID is the vpc-id of the VPC this provider should use to create resources.
+	// When this value is specified the VPC is considered unmanaged.
+	// +optional
+	ID *string `json:"id,omitempty"`
+
+	// CidrBlock is the CIDR block to be used when the provider creates a managed VPC.
+	// Defaults to 10.0.0.0/16.
+	// Ignored if ID is specified.
+	// +optional
+	CidrBlock *string `json:"cidrBlock,omitempty"`
+}
+
+// SubnetSpec configures an AWS Subnet.
+type SubnetSpec struct {
+	// ID is the unique identifier of the subnet this provider should use to create resources.
+	// When this value is specified the subnet is considered unmanaged.
+	// +optional
+	ID string `json:"id,omitempty"`
+
+	// CidrBlock is the CIDR block to be used when the provider creates a managed VPC.
+	// Must be specified when VPCSpec CidrBlock is specified.
+	// Ignored if ID is specified.
+	// +optional
+	CidrBlock *string `json:"cidrBlock,omitempty"`
+
+	// AvailabilityZone defines the availability zone to use for this subnet in the cluster's region.
+	// Ignored if ID is specified.
+	// +optional
+	AvailabilityZone *string `json:"availabilityZone,omitempty"`
+
+	// Public defines the subnet as a public subnet. Refer to the AWS documentation for further information.
+	// Ignored if ID is specified.
+	// +optional
+	Public *bool `json:"public,omitempty"`
 }
