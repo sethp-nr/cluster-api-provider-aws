@@ -19,6 +19,8 @@ package ec2
 import (
 	"testing"
 
+	"sigs.k8s.io/cluster-api-provider-aws/pkg/cloud/aws/tags"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/golang/mock/gomock"
@@ -44,6 +46,9 @@ func TestReconcileInternetGateways(t *testing.T) {
 			input: &v1alpha1.Network{
 				VPC: v1alpha1.VPC{
 					ID: "vpc-gateways",
+					Tags: tags.Map{
+						tags.NameAWSProviderManaged: "true",
+					},
 				},
 			},
 			expect: func(m *mock_ec2iface.MockEC2APIMockRecorder) {
@@ -71,6 +76,9 @@ func TestReconcileInternetGateways(t *testing.T) {
 			input: &v1alpha1.Network{
 				VPC: v1alpha1.VPC{
 					ID: "vpc-gateways",
+					Tags: tags.Map{
+						tags.NameAWSProviderManaged: "true",
+					},
 				},
 			},
 			expect: func(m *mock_ec2iface.MockEC2APIMockRecorder) {

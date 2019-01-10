@@ -24,6 +24,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/cluster-api-provider-aws/pkg/cloud/aws/tags"
 )
 
 // AWSResourceReference is a reference to a specific AWS resource by ID, ARN, or filters.
@@ -104,14 +105,19 @@ type Network struct {
 
 // VPC defines an AWS vpc.
 type VPC struct {
-	ID        string            `json:"id"`
-	CidrBlock string            `json:"cidrBlock"`
-	Tags      map[string]string `json:"tags,omitempty"`
+	ID        string   `json:"id"`
+	CidrBlock string   `json:"cidrBlock"`
+	Tags      tags.Map `json:"tags,omitempty"`
 }
 
 // String returns a string representation of the VPC.
 func (v *VPC) String() string {
 	return fmt.Sprintf("id=%s", v.ID)
+}
+
+// IsManaged returns true if the VPC is managed by cluster api.
+func (v *VPC) IsManaged() bool {
+	return v.Tags.HasManaged()
 }
 
 // Subnet defines an AWS subnet attached to a VPC.

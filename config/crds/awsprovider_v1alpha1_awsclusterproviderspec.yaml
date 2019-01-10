@@ -26,6 +26,27 @@ spec:
           type: string
         metadata:
           type: object
+        networkSpec:
+          properties:
+            subnets:
+              items:
+                properties:
+                  availabilityZone:
+                    type: string
+                  id:
+                    type: string
+                  public:
+                    type: boolean
+                type: object
+              type: array
+            vpc:
+              properties:
+                cidrBlock:
+                  type: string
+                id:
+                  type: string
+              type: object
+          type: object
         region:
           type: string
         sshKeyName:
