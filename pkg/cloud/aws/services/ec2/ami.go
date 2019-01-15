@@ -16,72 +16,43 @@ limitations under the License.
 
 package ec2
 
-import (
-	"fmt"
-	"strings"
-
-	"k8s.io/klog"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/pkg/errors"
-)
-
-const (
-	// machineAMIOwnerID is a heptio/VMware owned account. Please see:
-	// https://github.com/kubernetes-sigs/cluster-api-provider-aws/issues/487
-	machineAMIOwnerID = "258751437250"
-
-	// amiNameFormat is defined in the build/ directory of this project.
-	// The pattern is:
-	// 1. the string value `ami-`
-	// 2. the baseOS of the AMI, for example: ubuntu, centos, amazon
-	// 3. the version of the baseOS, for example: 18.04 (ubuntu), 7 (centos), 2 (amazon)
-	// 4. the kubernetes version as defined by the packages produced by kubernetes/release, for example: 1.13.0-00, 1.12.5-01
-	// 5. the timestamp that the AMI was built
-	amiNameFormat = "ami-%s-%s-%s-??-??????????"
-)
-
-func amiName(baseOS, baseOSVersion, kubernetesVersion string) string {
-	return fmt.Sprintf(amiNameFormat, baseOS, baseOSVersion, strings.TrimPrefix(kubernetesVersion, "v"))
-}
-
 // defaultAMILookup returns the default AMI based on region
-func (s *Service) defaultAMILookup(baseOS, baseOSVersion, kubernetesVersion string) (string, error) {
-	describeImageInput := &ec2.DescribeImagesInput{
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("owner-id"),
-				Values: []*string{aws.String(machineAMIOwnerID)},
-			},
-			{
-				Name:   aws.String("name"),
-				Values: []*string{aws.String(amiName(baseOS, baseOSVersion, kubernetesVersion))},
-			},
-			{
-				Name:   aws.String("architecture"),
-				Values: []*string{aws.String("x86_64")},
-			},
-			{
-				Name:   aws.String("state"),
-				Values: []*string{aws.String("available")},
-			},
-			{
-				Name:   aws.String("virtualization-type"),
-				Values: []*string{aws.String("hvm")},
-			},
-		},
+func (s *Service) defaultAMILookup(region string) string {
+	//TODO(chuckha) Replace this function with a method to filter public images.
+	switch region {
+	case "ap-northeast-1":
+		return "ami-06525773f0332c0ca"
+	case "ap-northeast-2":
+		return "ami-0914a816a80ab8779"
+	case "ap-south-1":
+		return "ami-04b17f6875b4d9c29"
+	case "ap-southeast-1":
+		return "ami-0ccaa193408259c82"
+	case "ap-southeast-2":
+		return "ami-0385d030f1b7df12c"
+	case "ca-central-1":
+		return "ami-031ca32942ffbe25f"
+	case "eu-central-1":
+		return "ami-078f9fe8bdaa81aa8"
+	case "eu-west-1":
+		return "ami-09547cd6f9856a79b"
+	case "eu-west-2":
+		return "ami-08efe1a8b5f18f381"
+	case "eu-west-3":
+		return "ami-042c578ede4ff3f33"
+	case "sa-east-1":
+		return "ami-0dd7e2894db509204"
+	case "us-east-1":
+		return "ami-026e9f3a713727945"
+	case "us-east-2":
+		return "ami-0ec6d3241fb7776fe"
+	case "us-west-1":
+		return "ami-06ec1c533176de131"
+	case "us-west-2":
+		return "ami-0cfa2d1fa5cc93615"
+	default:
+		return "unknown region"
 	}
-
-	out, err := s.scope.EC2.DescribeImages(describeImageInput)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to find ami: %q", amiName(baseOS, baseOSVersion, kubernetesVersion))
-	}
-	if len(out.Images) == 0 {
-		return "", errors.Errorf("found no AMIs with the name: %q", amiName(baseOS, baseOSVersion, kubernetesVersion))
-	}
-	klog.V(2).Infof("Using AMI: %q", aws.StringValue(out.Images[0].ImageId))
-	return aws.StringValue(out.Images[0].ImageId), nil
 }
 
 func (s *Service) defaultBastionAMILookup(region string) string {
