@@ -36,6 +36,11 @@ const (
 func (s *Service) reconcileRouteTables() error {
 	klog.V(2).Infof("Reconciling routing tables")
 
+	if !s.scope.VPC().IsManaged() {
+		klog.V(2).Info("Working in an unmanaged VPC, skipping route table reconciliation")
+		return nil
+	}
+
 	subnetRouteMap, err := s.describeVpcRouteTablesBySubnet()
 	if err != nil {
 		return err

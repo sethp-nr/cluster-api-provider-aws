@@ -39,6 +39,23 @@ const (
 func (s *Service) reconcileSubnets() error {
 	klog.V(2).Infof("Reconciling subnets")
 
+	if !s.scope.VPC().IsManaged() {
+		var subnets v1alpha1.Subnets
+		for _, spec := range s.scope.ClusterConfig.NetworkSpec.Subnets {
+			subnets = append(subnets, &v1alpha1.Subnet{
+				ID: spec.ID,
+
+				// TODO: nil dereferences abound
+				VpcID:            s.scope.VPC().ID,
+				CidrBlock:        *spec.CidrBlock,
+				AvailabilityZone: *spec.AvailabilityZone,
+				IsPublic:         *spec.Public,
+			})
+		}
+		s.scope.Network().Subnets = subnets
+		return nil
+	}
+
 	subnets := s.scope.Subnets()
 	defer func() {
 		s.scope.Network().Subnets = subnets

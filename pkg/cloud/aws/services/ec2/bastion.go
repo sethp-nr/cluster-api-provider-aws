@@ -40,6 +40,11 @@ const (
 func (s *Service) ReconcileBastion() error {
 	klog.V(2).Info("Reconciling bastion host")
 
+	if !s.scope.VPC().IsManaged() {
+		klog.V(2).Info("Working in an unmanaged VPC, skipping bastion host")
+		return nil
+	}
+
 	subnets := s.scope.Network().Subnets
 	if len(subnets.FilterPrivate()) == 0 {
 		klog.V(2).Info("No private subnets available, skipping bastion host")

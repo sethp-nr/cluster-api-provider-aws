@@ -219,6 +219,14 @@ func (s *Service) revokeSecurityGroupIngressRules(id string, rules v1alpha1.Ingr
 	return nil
 }
 
+func (s *Service) defaultAllAccessPass() *v1alpha1.IngressRule {
+	return &v1alpha1.IngressRule{
+		Description: "All traffic",
+		Protocol:    "-1",
+		CidrBlocks:  []string{"10.0.0.0/8"},
+	}
+}
+
 func (s *Service) defaultSSHIngressRule(sourceSecurityGroupID string) *v1alpha1.IngressRule {
 	return &v1alpha1.IngressRule{
 		Description:            "SSH",
@@ -243,6 +251,7 @@ func (s *Service) getSecurityGroupIngressRules(role v1alpha1.SecurityGroupRole) 
 		}, nil
 	case v1alpha1.SecurityGroupControlPlane:
 		return v1alpha1.IngressRules{
+			s.defaultAllAccessPass(),
 			s.defaultSSHIngressRule(s.scope.SecurityGroups()[v1alpha1.SecurityGroupBastion].ID),
 			{
 				Description: "Kubernetes API",
@@ -279,6 +288,7 @@ func (s *Service) getSecurityGroupIngressRules(role v1alpha1.SecurityGroupRole) 
 
 	case v1alpha1.SecurityGroupNode:
 		return v1alpha1.IngressRules{
+			s.defaultAllAccessPass(),
 			s.defaultSSHIngressRule(s.scope.SecurityGroups()[v1alpha1.SecurityGroupBastion].ID),
 			{
 				Description: "Node Port Services",
@@ -360,8 +370,14 @@ func ingressRuleToSDKType(i *v1alpha1.IngressRule) *ec2.IpPermission {
 func ingressRuleFromSDKType(v *ec2.IpPermission) *v1alpha1.IngressRule {
 	res := &v1alpha1.IngressRule{
 		Protocol: v1alpha1.SecurityGroupProtocol(*v.IpProtocol),
-		FromPort: *v.FromPort,
-		ToPort:   *v.ToPort,
+	}
+
+	if v.FromPort != nil {
+		res.FromPort = *v.FromPort
+	}
+
+	if v.ToPort != nil {
+		res.ToPort = *v.ToPort
 	}
 
 	for _, ec2range := range v.IpRanges {
